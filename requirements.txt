@@ -1,7 +1,8 @@
-django>=4.2,<5.0
-djangorestframework
-djangorestframework-simplejwt
-drf-yasg
-setuptools
-mysqlclient
-python-decouple
+django==5.1.2
+djangorestframework==5.1.2
+djangorestframework-simplejwt==2.9.0
+drf-yasg==1.21.7
+setuptools==75.1.0
+mysqlclient==2.2.4
+python-decouple==3.8
+geopy==2.4.1

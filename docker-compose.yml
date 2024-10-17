@@ -16,6 +16,14 @@ services:
     networks:
       - app-network
 
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"  # 映射 Redis 端口
+    networks:
+      - app-network
+
   web:
     build: .
     command: python manage.py runserver 0.0.0.0:8000

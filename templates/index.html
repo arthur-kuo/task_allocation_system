@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>即時任務分配系統</title>
+</head>
+<body>
+    <h1>即時任務分配系統</h1>
+    <div id="tasks"></div>
+    <script>
+        const socket = new WebSocket('ws://localhost:8000/ws/tasks/');
+
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            document.getElementById('tasks').innerHTML = data.message;
+        };
+
+        socket.onopen = function(event) {
+            socket.send(JSON.stringify({
+                'message': 'Hello, WebSocket!'
+            }));
+        };
+    </script>
+</body>
+</html>
