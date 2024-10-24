@@ -26,7 +26,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     # authentication_classes = []  # 禁用身份验证
     # permission_classes = [AllowAny]  # 允许任何人访问
     # permission_class = [IsAuthenticated]
-    # 驗證順便可得知client 資訊
+    # 透過驗證可得知client 資訊
 
     def get_tasks(self):
         user_profile = self.request.user.userprofile 
@@ -43,9 +43,14 @@ class TaskViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = TaskSerializer(data=self.request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        print(serializer.context)
+
         # 獲取 client 和必要的輸入資訊
         client = self.request.user.userprofile # 從 request 中自動取得 client
+
+        # return Response({'client': client})
+        required_skill = serializer.validated_data.get('required_skill')
+        location = serializer.validated_data.get('location')
+        print('task location is:', location)
         print("client is:", client.user.username)
         print("client location:", client.user_location)
         print("client on duty status:", client.on_duty)
@@ -55,8 +60,8 @@ class TaskViewSet(viewsets.ModelViewSet):
         location = serializer.validated_data.get('location')
 
         # 查找 worker
-        # worker = find_worker(required_skill, location)
-        worker = find_worker_by_skill(required_skill)
+        worker = find_worker(required_skill, location)
+        # worker = find_worker_by_skill(required_skill)
         if not worker:
             return Response({'detail': 'No available worker found'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -64,8 +69,11 @@ class TaskViewSet(viewsets.ModelViewSet):
         print("worker location:", worker.user_location)
         print("worker on duty status:", worker.on_duty)
         print("worker is working:", worker.is_working)
-        
+
         # 保存 Task 並自動設置 client 和 worker
+        worker.is_working = True
+        worker.save()
+        print("worker is working:", worker.is_working)
         task = serializer.save(client=client, worker=worker)
         full_task_serializer = TaskSerializer(task)
 
@@ -77,9 +85,9 @@ class TaskViewSet(viewsets.ModelViewSet):
         if task.client != request.user:
             return Response({'detail': 'You do not have permission to cancel this task.'}, status=status.HTTP_403_FORBIDDEN)
         elif task.is_finished:
-            return Response({'detail': "Can't cancel a finished task."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': "Can't cancel a finished task."}, status=status.HTTP_400_BAD_REQUEST) # 已完成的任務不能取消(刪除)
         task.delete()
-        return Response({'detail': 'Task canceled.'}, status=status.HTTP_200_OK)
+        return Response({'detail': 'Task canceled.'}, status=status.HTTP_200_OK) 
 
     def update(self, request, *args, **kwargs):
         return Response({'detail': 'Update operation is not allowed.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

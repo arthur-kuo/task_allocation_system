@@ -36,7 +36,7 @@ class TaskSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(TaskSerializer, self).__init__(*args, **kwargs)
         if 'request' in self.context:
-            if self.context['request'].method in ['POST', 'PUT']:
+            if self.context['request'].method in ['POST']:
                 self.fields['client'].required = False
                 self.fields['worker'].required = False
                 self.fields['start_time'].required = False
