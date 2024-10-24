@@ -6,3 +6,4 @@ setuptools==75.1.0
 mysqlclient==2.2.4
 python-decouple==3.8
 geopy==2.4.1
+redis==5.1.1

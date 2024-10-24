@@ -20,10 +20,9 @@ class Task(models.Model):
     required_skill = models.ForeignKey(Skill,  null=True, blank=True, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     description = models.TextField()
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
-    location = models.CharField(max_length=255)
+    start_time = models.DateTimeField(auto_now_add=True)
+    end_time = models.DateTimeField(null=True, blank=True)
     remuneration = models.IntegerField(null=True, blank=True)
-    task_location = models.CharField(max_length=255, default='Unknown')
+    location = models.CharField(max_length=255, default='Unknown')
     is_finished = models.BooleanField(default=False)
 

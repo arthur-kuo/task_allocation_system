@@ -1,7 +1,7 @@
 import redis
 from geopy.distance import geodesic
 from geopy.geocoders import Nominatim
-from .models import Task, UserProfile
+from .models import Task, UserProfile, UserSkill
 import time
 import json
 
@@ -27,8 +27,8 @@ def get_coordinates(address):
     else:
         return None
 
-def find_worker(task):
-    task_location = get_cached_coordinates(task.location)
+def find_worker(required_skill, location):
+    task_location = get_cached_coordinates(location)
     if not task_location:
         print("Task location could not be converted to coordinates.")
         return
@@ -38,7 +38,7 @@ def find_worker(task):
         available_workers = UserProfile.objects.filter(is_working=True, on_duty=False)
 
         # 根據技能匹配工人
-        matched_workers = [worker for worker in available_workers if worker.has_skills(task.skill)]
+        matched_workers = [worker for worker in available_workers if worker.has_skills(required_skill)]
 
         nearby_workers = []
         for worker in matched_workers:
@@ -52,15 +52,56 @@ def find_worker(task):
         if nearby_workers:
             closest_worker, closest_distance = min(nearby_workers, key=lambda w: w[1])
             closest_worker.on_duty = True
-            closest_worker.save()
+            # closest_worker.save()
             task.worker = closest_worker
-            task.save()
+            # task.save()
 
             print(f"Worker {closest_worker} (distance: {closest_distance:.2f} km) assigned to task {task}")
             break
         else:
             print("No available workers within 3 km, retrying in 30 seconds...")
             time.sleep(30)  # 等待30秒後重新查詢
+        return closest_worker
+
+def find_worker_by_skill(required_skill):
+    count = 0
+    while True:
+        # 根據技能查詢符合要求的工人，並且檢查他們是否正在執勤且未被分配任務
+        skill_matched_worker_profiles = UserProfile.objects.filter(
+            on_duty=True, 
+            is_working=False, 
+            id__in=UserSkill.objects.filter(skill=required_skill).values_list('user_profile_id', flat=True),
+        ).distinct()
+
+        print(skill_matched_worker_profiles)
+
+        if skill_matched_worker_profiles.exists():
+            # 返回第一個符合要求的工人
+            return skill_matched_worker_profiles.first()
+        if count >= 5:
+            print("No available workers")
+            return(None)
+        else:
+            count += 1
+            yield("No available workers within 3 km, retrying in 3 seconds...")
+            time.sleep(3)  # 等待3秒後重新查詢
+
+        # skill_matched_worker = UserSkill.objects.filter(skills=required_skill)
+        # available_workers = UserProfile.objects.filter(is_working=False, on_duty=True)
+        # print(UserProfile.objects)
+        # # 根據技能匹配工人
+        # matched_workers = [worker for worker in available_workers if worker.skills(required_skill)]
+    
+        # if count >= 5:
+        #     print("No available workers")
+        #     break
+        # elif matched_workers:
+        #     return matched_workers[0]
+        # else:
+        #     count += 1
+        #     print("No available workers within 3 km, retrying in 3 seconds...")
+        #     time.sleep(3)  # 等待3秒後重新查詢
+
 
 def get_worker_location(worker):
     # 獲取工人的最新位置

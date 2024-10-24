@@ -28,9 +28,17 @@ class UserSkillSerializer(serializers.ModelSerializer):
         fields = ['user_profile', 'skill']
 
 class TaskSerializer(serializers.ModelSerializer):
-    client = UserProfileSerializer()
-    worker = UserProfileSerializer()
-
     class Meta:
         model = Task
-        fields = ['id', 'client', 'worker', 'title', 'description', 'start_time', 'end_time', 'location', 'remuneration', 'task_location', 'is_finished']
+        fields = ['client', 'worker', 'required_skill', 'title', 'description', 'start_time', 'end_time', 'location', 'remuneration', 'is_finished']
+        read_only_fields = ['client', 'worker', 'start_time', 'end_time', 'is_finished']
+    
+    def __init__(self, *args, **kwargs):
+        super(TaskSerializer, self).__init__(*args, **kwargs)
+        if 'request' in self.context:
+            if self.context['request'].method in ['POST', 'PUT']:
+                self.fields['client'].required = False
+                self.fields['worker'].required = False
+                self.fields['start_time'].required = False
+                self.fields['end_time'].required = False
+                self.fields['is_finished'].required = False
