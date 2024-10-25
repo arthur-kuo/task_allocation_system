@@ -42,3 +42,7 @@ class TaskSerializer(serializers.ModelSerializer):
                 self.fields['start_time'].required = False
                 self.fields['end_time'].required = False
                 self.fields['is_finished'].required = False
+            elif self.context['request'].method in ['PATCH']:
+                for field in self.fields:
+                    self.fields[field].required = False
+

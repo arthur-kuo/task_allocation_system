@@ -6,6 +6,7 @@ from .serializers import UserProfileSerializer, SkillSerializer, UserSkillSerial
 from .services import find_worker, find_worker_by_skill
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import action
+from datetime import datetime
 # from rest_framework.permissions import AllowAny
 
 class UserProfileViewSet(viewsets.ModelViewSet):
@@ -33,14 +34,14 @@ class TaskViewSet(viewsets.ModelViewSet):
         print(Task.objects.filter(client=user_profile))
         return Task.objects.filter(client=user_profile)
 
-    def get_task(self, request, *args, **kwargs):
+    def get_task(self, request):
         task_id = kwargs.get('id')
         task = self.get_object()
         if task.client != request.user.userprofil:
             return Response({'detail': 'You do not have permission to view this task.'}, status=status.HTTP_403_FORBIDDEN)
         return super().retrieve(request, *args, **kwargs)
 
-    def create(self, request, *args, **kwargs):
+    def create(self, request):
         serializer = TaskSerializer(data=self.request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
 
@@ -55,9 +56,6 @@ class TaskViewSet(viewsets.ModelViewSet):
         print("client location:", client.user_location)
         print("client on duty status:", client.on_duty)
         print("client is working:", client.is_working)
-        # return Response({'client': client})
-        required_skill = serializer.validated_data.get('required_skill')
-        location = serializer.validated_data.get('location')
 
         # 查找 worker
         worker = find_worker(required_skill, location)
@@ -91,4 +89,14 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         return Response({'detail': 'Update operation is not allowed.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def partial_update(self, request, pk=None):
+        serializer = TaskSerializer(data=self.request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        # 只更新 end_time 和 is_finished
+        task = self.get_object()
+        task.end_time = serializer.validated_data.get('end_time', datetime.now().isoformat(timespec='seconds') + '+08:00')
+        task.is_finished = serializer.validated_data.get('is_finished', True)
+        task.save()
+        return Response(TaskSerializer(task).data, status=status.HTTP_200_OK)
 
