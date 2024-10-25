@@ -82,6 +82,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def delete(self, request, id = None):
         task = self.get_object()
+        print(task)
         if task.client != request.user:
             return Response({'detail': 'You do not have permission to cancel this task.'}, status=status.HTTP_403_FORBIDDEN)
         elif task.is_finished:
