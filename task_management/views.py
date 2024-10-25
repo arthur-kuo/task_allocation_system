@@ -88,7 +88,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         task.delete()
         return Response({'detail': 'Task canceled.'}, status=status.HTTP_200_OK) 
 
-    def update(self, request, *args, **kwargs):
+    def update(self, request):
         return Response({'detail': 'Update operation is not allowed.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def partial_update(self, request, pk=None):
